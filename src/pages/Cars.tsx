@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { parse, isValid } from 'date-fns'
-import { cars } from '../data/cars'
+import { getVehicles } from '../utils/storage'
 import type { Car, Category } from '../data/cars'
 import CarCard from '../components/CarCard'
 import ReservationModal from '../components/ReservationModal'
@@ -39,7 +39,7 @@ export default function Cars() {
 
   const filtered = useMemo(
     () =>
-      cars.filter(
+      getVehicles().filter(
         (c) => c.available && (activeCategory === 'All' || c.category === activeCategory)
       ),
     [activeCategory]

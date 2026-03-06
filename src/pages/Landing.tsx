@@ -6,7 +6,8 @@ import 'react-datepicker/dist/react-datepicker.css'
 import { format } from 'date-fns'
 import { Search, Car, MessageSquare, Shield, Tag, ChevronRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { cars, featuredCarIds } from '../data/cars'
+import { featuredCarIds } from '../data/cars'
+import { getVehicles } from '../utils/storage'
 import CarCard from '../components/CarCard'
 import ReservationModal from '../components/ReservationModal'
 import type { Car as CarType } from '../data/cars'
@@ -18,7 +19,7 @@ export default function Landing() {
   const [returnDate, setReturnDate] = useState<Date | null>(null)
   const [selectedCar, setSelectedCar] = useState<CarType | null>(null)
 
-  const featuredCars = featuredCarIds.map((id) => cars.find((c) => c.id === id)).filter(Boolean) as CarType[]
+  const featuredCars = featuredCarIds.map((id) => getVehicles().find((c) => c.id === id)).filter(Boolean) as CarType[]
 
   const handleSearch = () => {
     const params = new URLSearchParams()
