@@ -33,54 +33,37 @@ export default function AdminVehicleForm() {
   const { t } = useTranslation()
   const isEdit = Boolean(id)
 
-  const existing = isEdit ? getVehicles().find((c) => c.id === id) : undefined
-
-  const [form, setForm] = useState(() => {
-    if (existing) {
-      return {
-        name: existing.name,
-        category: existing.category,
-        year: existing.year,
-        doors: existing.doors,
-        seats: existing.seats,
-        transmission: existing.transmission,
-        fuel: existing.fuel,
-        hp: existing.hp,
-        pricePerDay: existing.pricePerDay,
-        currency: existing.currency,
-        image: existing.image,
-        features: existing.features.join(', '),
-        available: existing.available,
-      }
-    }
-    return emptyForm()
-  })
-
+  const [form, setForm] = useState(emptyForm)
   const [error, setError] = useState('')
   const [uploading, setUploading] = useState(false)
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    const existing = id ? getVehicles().find((c) => c.id === id) : undefined
-    if (existing) {
-      setForm({
-        name: existing.name,
-        category: existing.category,
-        year: existing.year,
-        doors: existing.doors,
-        seats: existing.seats,
-        transmission: existing.transmission,
-        fuel: existing.fuel,
-        hp: existing.hp,
-        pricePerDay: existing.pricePerDay,
-        currency: existing.currency,
-        image: existing.image,
-        features: existing.features.join(', '),
-        available: existing.available,
-      })
-    } else {
-      setForm(emptyForm())
-    }
     setError('')
+    if (!id) {
+      setForm(emptyForm())
+      return
+    }
+    getVehicles().then((vehicles) => {
+      const existing = vehicles.find((c) => c.id === id)
+      if (existing) {
+        setForm({
+          name: existing.name,
+          category: existing.category,
+          year: existing.year,
+          doors: existing.doors,
+          seats: existing.seats,
+          transmission: existing.transmission,
+          fuel: existing.fuel,
+          hp: existing.hp,
+          pricePerDay: existing.pricePerDay,
+          currency: existing.currency,
+          image: existing.image,
+          features: existing.features.join(', '),
+          available: existing.available,
+        })
+      }
+    })
   }, [id])
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
@@ -112,7 +95,7 @@ export default function AdminVehicleForm() {
     setUploading(false)
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
 
@@ -138,11 +121,13 @@ export default function AdminVehicleForm() {
       available: form.available,
     }
 
+    setSaving(true)
     if (isEdit) {
-      updateVehicle(car)
+      await updateVehicle(car)
     } else {
-      addVehicle(car)
+      await addVehicle(car)
     }
+    setSaving(false)
 
     navigate('/admin', {
       state: { success: isEdit ? t('admin.successUpdated') : t('admin.successAdded') },
@@ -247,7 +232,7 @@ export default function AdminVehicleForm() {
         <div className="flex gap-3 pt-2">
           <button
             type="submit"
-            disabled={uploading}
+            disabled={uploading || saving}
             className="bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white font-semibold px-5 py-2 rounded-lg transition-colors text-sm"
           >
             {isEdit ? t('admin.saveChanges') : t('admin.addVehicle')}

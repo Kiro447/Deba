@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import DatePicker from 'react-datepicker'
@@ -6,7 +6,6 @@ import 'react-datepicker/dist/react-datepicker.css'
 import { format } from 'date-fns'
 import { Search, Car, MessageSquare, Shield, Tag, ChevronRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { featuredCarIds } from '../data/cars'
 import { getVehicles } from '../utils/storage'
 import CarCard from '../components/CarCard'
 import ReservationModal from '../components/ReservationModal'
@@ -18,8 +17,13 @@ export default function Landing() {
   const [pickupDate, setPickupDate] = useState<Date | null>(null)
   const [returnDate, setReturnDate] = useState<Date | null>(null)
   const [selectedCar, setSelectedCar] = useState<CarType | null>(null)
+  const [featuredCars, setFeaturedCars] = useState<CarType[]>([])
 
-  const featuredCars = featuredCarIds.map((id) => getVehicles().find((c) => c.id === id)).filter(Boolean) as CarType[]
+  useEffect(() => {
+    getVehicles().then((all) => {
+      setFeaturedCars(all.filter((c) => c.available).slice(0, 4))
+    })
+  }, [])
 
   const handleSearch = () => {
     const params = new URLSearchParams()
@@ -109,35 +113,37 @@ export default function Landing() {
       </section>
 
       {/* ── Featured Cars ────────────────────────────────────────────────────── */}
-      <section className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3">
-              {t('landing.featuredTitle')}
-            </h2>
-            <p className="text-gray-500 max-w-xl mx-auto">{t('landing.featuredSubtitle')}</p>
-          </div>
+      {featuredCars.length > 0 && (
+        <section className="py-20 bg-gray-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3">
+                {t('landing.featuredTitle')}
+              </h2>
+              <p className="text-gray-500 max-w-xl mx-auto">{t('landing.featuredSubtitle')}</p>
+            </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {featuredCars.map((car) => (
-              <CarCard
-                key={car.id}
-                car={car}
-                onReserve={(c) => setSelectedCar(c)}
-                pickupDate={pickupDate}
-                returnDate={returnDate}
-              />
-            ))}
-          </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {featuredCars.map((car) => (
+                <CarCard
+                  key={car.id}
+                  car={car}
+                  onReserve={(c) => setSelectedCar(c)}
+                  pickupDate={pickupDate}
+                  returnDate={returnDate}
+                />
+              ))}
+            </div>
 
-          <div className="text-center mt-10">
-            <Link to="/cars" className="btn-primary">
-              {t('landing.viewAll')}
-              <ChevronRight className="w-4 h-4" />
-            </Link>
+            <div className="text-center mt-10">
+              <Link to="/cars" className="btn-primary">
+                {t('landing.viewAll')}
+                <ChevronRight className="w-4 h-4" />
+              </Link>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ── Why Us ───────────────────────────────────────────────────────────── */}
       <section className="py-20 bg-white">

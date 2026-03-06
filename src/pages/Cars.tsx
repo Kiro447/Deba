@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { parse, isValid } from 'date-fns'
@@ -22,6 +22,11 @@ export default function Cars() {
   const [searchParams] = useSearchParams()
   const [activeCategory, setActiveCategory] = useState<Category | 'All'>('All')
   const [selectedCar, setSelectedCar] = useState<Car | null>(null)
+  const [vehicles, setVehicles] = useState<Car[]>([])
+
+  useEffect(() => {
+    getVehicles().then(setVehicles)
+  }, [])
 
   const pickupDate = useMemo(() => {
     const raw = searchParams.get('from')
@@ -39,10 +44,10 @@ export default function Cars() {
 
   const filtered = useMemo(
     () =>
-      getVehicles().filter(
+      vehicles.filter(
         (c) => c.available && (activeCategory === 'All' || c.category === activeCategory)
       ),
-    [activeCategory]
+    [vehicles, activeCategory]
   )
 
   return (

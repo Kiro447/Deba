@@ -1,29 +1,62 @@
+import { supabase } from './supabase'
 import type { Car } from '../data/cars'
 
-const KEY = 'deba_vehicles'
-
-export function getVehicles(): Car[] {
-  const raw = localStorage.getItem(KEY)
-  if (!raw) return []
-  try {
-    return JSON.parse(raw) as Car[]
-  } catch {
-    return []
+function rowToCar(row: Record<string, unknown>): Car {
+  return {
+    id: row.id as string,
+    name: row.name as string,
+    category: row.category as Car['category'],
+    year: row.year as number,
+    doors: row.doors as number,
+    seats: row.seats as number,
+    transmission: row.transmission as Car['transmission'],
+    fuel: row.fuel as Car['fuel'],
+    hp: row.hp as number,
+    pricePerDay: row.price_per_day as number,
+    currency: row.currency as string,
+    image: row.image as string,
+    features: row.features as string[],
+    available: row.available as boolean,
   }
 }
 
-export function setVehicles(cars: Car[]): void {
-  localStorage.setItem(KEY, JSON.stringify(cars))
+function carToRow(car: Car) {
+  return {
+    id: car.id,
+    name: car.name,
+    category: car.category,
+    year: car.year,
+    doors: car.doors,
+    seats: car.seats,
+    transmission: car.transmission,
+    fuel: car.fuel,
+    hp: car.hp,
+    price_per_day: car.pricePerDay,
+    currency: car.currency,
+    image: car.image,
+    features: car.features,
+    available: car.available,
+  }
 }
 
-export function addVehicle(car: Car): void {
-  setVehicles([...getVehicles(), car])
+export async function getVehicles(): Promise<Car[]> {
+  const { data, error } = await supabase
+    .from('vehicles')
+    .select('*')
+    .order('created_at')
+  if (error || !data) return []
+  return data.map(rowToCar)
 }
 
-export function updateVehicle(car: Car): void {
-  setVehicles(getVehicles().map((c) => (c.id === car.id ? car : c)))
+export async function addVehicle(car: Car): Promise<void> {
+  await supabase.from('vehicles').insert(carToRow(car))
 }
 
-export function deleteVehicle(id: string): void {
-  setVehicles(getVehicles().filter((c) => c.id !== id))
+export async function updateVehicle(car: Car): Promise<void> {
+  const { id, ...fields } = carToRow(car)
+  await supabase.from('vehicles').update(fields).eq('id', id)
+}
+
+export async function deleteVehicle(id: string): Promise<void> {
+  await supabase.from('vehicles').delete().eq('id', id)
 }

@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next'
 export default function AdminDashboard() {
   const location = useLocation()
   const { t } = useTranslation()
-  const [vehicles, setVehicles] = useState<Car[]>(() => getVehicles())
+  const [vehicles, setVehicles] = useState<Car[]>([])
   const [successMsg, setSuccessMsg] = useState<string>(() => {
     const msg = (location.state as { success?: string })?.success ?? ''
     if (msg) window.history.replaceState({}, '')
@@ -17,15 +17,20 @@ export default function AdminDashboard() {
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
 
   useEffect(() => {
+    getVehicles().then(setVehicles)
+  }, [])
+
+  useEffect(() => {
     if (!successMsg) return
     const timer = setTimeout(() => setSuccessMsg(''), 4000)
     return () => clearTimeout(timer)
   }, [successMsg])
 
-  function confirmDelete() {
+  async function confirmDelete() {
     if (!pendingDeleteId) return
-    deleteVehicle(pendingDeleteId)
-    setVehicles(getVehicles())
+    await deleteVehicle(pendingDeleteId)
+    const updated = await getVehicles()
+    setVehicles(updated)
     setSuccessMsg(t('admin.successDeleted'))
     setPendingDeleteId(null)
   }
