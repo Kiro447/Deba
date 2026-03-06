@@ -3,9 +3,9 @@ import { useTranslation } from 'react-i18next'
 import DatePicker from 'react-datepicker'
 import 'react-datepicker/dist/react-datepicker.css'
 import { format } from 'date-fns'
-import { X, MessageCircle, Mail, Phone, AlertCircle } from 'lucide-react'
+import { X, AlertCircle, CheckCircle2 } from 'lucide-react'
 import type { Car } from '../data/cars'
-import { BUSINESS } from '../data/config'
+import { createReservation } from '../utils/storage'
 
 interface Props {
   car: Car
@@ -27,6 +27,8 @@ interface FormState {
 export default function ReservationModal({ car, initialPickup, initialReturn, onClose }: Props) {
   const { t } = useTranslation()
   const [error, setError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [success, setSuccess] = useState(false)
   const [form, setForm] = useState<FormState>({
     firstName: '',
     lastName: '',
@@ -50,22 +52,15 @@ export default function ReservationModal({ car, initialPickup, initialReturn, on
     return () => { document.body.style.overflow = '' }
   }, [])
 
+  // Auto-close after success
+  useEffect(() => {
+    if (!success) return
+    const timer = setTimeout(onClose, 2500)
+    return () => clearTimeout(timer)
+  }, [success, onClose])
+
   const set = (field: keyof FormState) => (val: string | Date | null) =>
     setForm((prev) => ({ ...prev, [field]: val }))
-
-  const buildMessage = () => {
-    const pickup = form.pickupDate ? format(form.pickupDate, 'dd/MM/yyyy') : '—'
-    const ret = form.returnDate ? format(form.returnDate, 'dd/MM/yyyy') : '—'
-    return (
-      `Hi, I would like to reserve the ${car.name} (${car.year}).\n\n` +
-      `Name: ${form.firstName} ${form.lastName}\n` +
-      `Email: ${form.email}\n` +
-      `Phone: ${form.phone}\n` +
-      `Pick-up: ${pickup}\n` +
-      `Return: ${ret}\n` +
-      (form.notes ? `\nNotes: ${form.notes}` : '')
-    )
-  }
 
   const validate = (): boolean => {
     if (!form.firstName || !form.lastName || !form.email || !form.phone || !form.pickupDate || !form.returnDate) {
@@ -80,21 +75,26 @@ export default function ReservationModal({ car, initialPickup, initialReturn, on
     return true
   }
 
-  const handleWhatsApp = () => {
+  const handleSubmit = async () => {
     if (!validate()) return
-    const msg = encodeURIComponent(buildMessage())
-    window.open(`https://wa.me/${BUSINESS.whatsapp}?text=${msg}`, '_blank')
-  }
-
-  const handleEmail = () => {
-    if (!validate()) return
-    const subject = encodeURIComponent(`Car Reservation – ${car.name}`)
-    const body = encodeURIComponent(buildMessage())
-    window.open(`mailto:${BUSINESS.email}?subject=${subject}&body=${body}`)
-  }
-
-  const handleCall = () => {
-    window.open(`tel:${BUSINESS.phone}`)
+    setSubmitting(true)
+    try {
+      await createReservation({
+        vehicleId: car.id,
+        firstName: form.firstName,
+        lastName: form.lastName,
+        email: form.email,
+        phone: form.phone,
+        pickupDate: format(form.pickupDate!, 'yyyy-MM-dd'),
+        returnDate: format(form.returnDate!, 'yyyy-MM-dd'),
+        notes: form.notes,
+      })
+      setSuccess(true)
+    } catch {
+      setError(t('reservation.errorGeneric'))
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -119,144 +119,122 @@ export default function ReservationModal({ car, initialPickup, initialReturn, on
           </button>
         </div>
 
-        <div className="p-6 space-y-4">
-          {/* Name row */}
-          <div className="grid grid-cols-2 gap-4">
-            <InputField
-              label={t('reservation.firstName')}
-              value={form.firstName}
-              onChange={(v) => set('firstName')(v)}
-              placeholder="John"
-              required
-            />
-            <InputField
-              label={t('reservation.lastName')}
-              value={form.lastName}
-              onChange={(v) => set('lastName')(v)}
-              placeholder="Doe"
-              required
-            />
+        {success ? (
+          <div className="p-10 flex flex-col items-center text-center">
+            <CheckCircle2 className="w-14 h-14 text-green-500 mb-4" />
+            <h3 className="text-xl font-bold text-gray-900 mb-2">{t('reservation.successTitle')}</h3>
+            <p className="text-sm text-gray-500">{t('reservation.successMessage')}</p>
           </div>
+        ) : (
+          <div className="p-6 space-y-4">
+            {/* Name row */}
+            <div className="grid grid-cols-2 gap-4">
+              <InputField
+                label={t('reservation.firstName')}
+                value={form.firstName}
+                onChange={(v) => set('firstName')(v)}
+                placeholder="John"
+                required
+              />
+              <InputField
+                label={t('reservation.lastName')}
+                value={form.lastName}
+                onChange={(v) => set('lastName')(v)}
+                placeholder="Doe"
+                required
+              />
+            </div>
 
-          {/* Email + Phone */}
-          <div className="grid grid-cols-2 gap-4">
-            <InputField
-              label={t('reservation.email')}
-              value={form.email}
-              onChange={(v) => set('email')(v)}
-              placeholder="john@example.com"
-              type="email"
-              required
-            />
-            <InputField
-              label={t('reservation.phone')}
-              value={form.phone}
-              onChange={(v) => set('phone')(v)}
-              placeholder="+389 70 000 000"
-              type="tel"
-              required
-            />
-          </div>
+            {/* Email + Phone */}
+            <div className="grid grid-cols-2 gap-4">
+              <InputField
+                label={t('reservation.email')}
+                value={form.email}
+                onChange={(v) => set('email')(v)}
+                placeholder="john@example.com"
+                type="email"
+                required
+              />
+              <InputField
+                label={t('reservation.phone')}
+                value={form.phone}
+                onChange={(v) => set('phone')(v)}
+                placeholder="+389 70 000 000"
+                type="tel"
+                required
+              />
+            </div>
 
-          {/* Dates */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                {t('reservation.pickupDate')} <span className="text-red-500">*</span>
-              </label>
-              <div className="border border-gray-300 rounded-lg px-3 py-2.5 focus-within:ring-2 focus-within:ring-brand-500 focus-within:border-brand-500">
-                <DatePicker
-                  selected={form.pickupDate}
-                  onChange={(d) => set('pickupDate')(d)}
-                  selectsStart
-                  startDate={form.pickupDate ?? undefined}
-                  endDate={form.returnDate ?? undefined}
-                  minDate={new Date()}
-                  dateFormat="dd/MM/yyyy"
-                  placeholderText="DD/MM/YYYY"
-                />
+            {/* Dates */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {t('reservation.pickupDate')} <span className="text-red-500">*</span>
+                </label>
+                <div className="border border-gray-300 rounded-lg px-3 py-2.5 focus-within:ring-2 focus-within:ring-brand-500 focus-within:border-brand-500">
+                  <DatePicker
+                    selected={form.pickupDate}
+                    onChange={(d) => set('pickupDate')(d)}
+                    selectsStart
+                    startDate={form.pickupDate ?? undefined}
+                    endDate={form.returnDate ?? undefined}
+                    minDate={new Date()}
+                    dateFormat="dd/MM/yyyy"
+                    placeholderText="DD/MM/YYYY"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {t('reservation.returnDate')} <span className="text-red-500">*</span>
+                </label>
+                <div className="border border-gray-300 rounded-lg px-3 py-2.5 focus-within:ring-2 focus-within:ring-brand-500 focus-within:border-brand-500">
+                  <DatePicker
+                    selected={form.returnDate}
+                    onChange={(d) => set('returnDate')(d)}
+                    selectsEnd
+                    startDate={form.pickupDate ?? undefined}
+                    endDate={form.returnDate ?? undefined}
+                    minDate={form.pickupDate ?? new Date()}
+                    dateFormat="dd/MM/yyyy"
+                    placeholderText="DD/MM/YYYY"
+                  />
+                </div>
               </div>
             </div>
+
+            {/* Notes */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                {t('reservation.returnDate')} <span className="text-red-500">*</span>
+                {t('reservation.notes')}
               </label>
-              <div className="border border-gray-300 rounded-lg px-3 py-2.5 focus-within:ring-2 focus-within:ring-brand-500 focus-within:border-brand-500">
-                <DatePicker
-                  selected={form.returnDate}
-                  onChange={(d) => set('returnDate')(d)}
-                  selectsEnd
-                  startDate={form.pickupDate ?? undefined}
-                  endDate={form.returnDate ?? undefined}
-                  minDate={form.pickupDate ?? new Date()}
-                  dateFormat="dd/MM/yyyy"
-                  placeholderText="DD/MM/YYYY"
-                />
+              <textarea
+                value={form.notes}
+                onChange={(e) => set('notes')(e.target.value)}
+                placeholder={t('reservation.notesPlaceholder')}
+                rows={3}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 resize-none"
+              />
+            </div>
+
+            {/* Error */}
+            {error && (
+              <div className="flex items-center gap-2 text-red-600 text-sm bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                {error}
               </div>
-            </div>
-          </div>
+            )}
 
-          {/* Notes */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              {t('reservation.notes')}
-            </label>
-            <textarea
-              value={form.notes}
-              onChange={(e) => set('notes')(e.target.value)}
-              placeholder={t('reservation.notesPlaceholder')}
-              rows={3}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 resize-none"
-            />
-          </div>
-
-          {/* Error */}
-          {error && (
-            <div className="flex items-center gap-2 text-red-600 text-sm bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-              <AlertCircle className="w-4 h-4 shrink-0" />
-              {error}
-            </div>
-          )}
-
-          {/* Divider */}
-          <div className="relative my-2">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200" />
-            </div>
-            <div className="relative flex justify-center">
-              <span className="px-3 bg-white text-xs text-gray-400 uppercase tracking-wider">
-                {t('reservation.orDivider')}
-              </span>
-            </div>
-          </div>
-
-          {/* Action buttons */}
-          <div className="space-y-3">
+            {/* Submit */}
             <button
-              onClick={handleWhatsApp}
-              className="w-full flex items-center justify-center gap-3 bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-4 rounded-xl transition-colors duration-200"
+              onClick={handleSubmit}
+              disabled={submitting}
+              className="w-full bg-brand-600 hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-xl transition-colors duration-200"
             >
-              <MessageCircle className="w-5 h-5" />
-              {t('reservation.sendWhatsApp')}
-            </button>
-
-            <button
-              onClick={handleEmail}
-              className="w-full flex items-center justify-center gap-3 bg-brand-600 hover:bg-brand-700 text-white font-semibold py-3 px-4 rounded-xl transition-colors duration-200"
-            >
-              <Mail className="w-5 h-5" />
-              {t('reservation.sendEmail')}
-            </button>
-
-            <button
-              onClick={handleCall}
-              className="w-full flex items-center justify-center gap-3 border-2 border-gray-300 text-gray-700 hover:border-brand-500 hover:text-brand-700 font-semibold py-3 px-4 rounded-xl transition-colors duration-200"
-            >
-              <Phone className="w-5 h-5" />
-              {t('reservation.callUs')} — {BUSINESS.phone}
+              {submitting ? t('reservation.submitting') : t('reservation.submit')}
             </button>
           </div>
-        </div>
+        )}
       </div>
     </div>
   )

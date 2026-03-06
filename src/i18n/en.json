@@ -53,7 +53,7 @@
   },
   "reservation": {
     "title": "Reserve",
-    "subtitle": "Fill in your details and choose how to send your reservation",
+    "subtitle": "Fill in your details and submit your reservation",
     "firstName": "First Name",
     "lastName": "Last Name",
     "email": "Email Address",
@@ -67,7 +67,12 @@
     "callUs": "Call to Reserve",
     "orDivider": "or",
     "requiredFields": "Please fill in all required fields.",
-    "dateError": "Return date must be after pick-up date."
+    "dateError": "Return date must be after pick-up date.",
+    "submit": "Reserve Now",
+    "submitting": "Reserving...",
+    "successTitle": "Reservation Submitted!",
+    "successMessage": "We received your reservation and will contact you shortly to confirm.",
+    "errorGeneric": "Something went wrong. Please try again."
   },
   "about": {
     "pageTitle": "About Us",
@@ -148,7 +153,23 @@
     "errorLogin": "Invalid username or password.",
     "uploading": "Uploading...",
     "uploadImage": "Upload image",
-    "or": "or"
+    "or": "or",
+    "reservations": "Reservations",
+    "noReservations": "No reservations yet.",
+    "customer": "Customer",
+    "email": "Email",
+    "phone": "Phone",
+    "vehicle": "Vehicle",
+    "pickupDate": "Pick-up",
+    "returnDate": "Return",
+    "createdAt": "Created",
+    "statusNew": "New",
+    "statusConfirmed": "Confirmed",
+    "statusCancelled": "Cancelled",
+    "confirm": "Confirm",
+    "reopen": "Reopen",
+    "filterAll": "All",
+    "statusUpdated": "Status updated."
   },
   "common": {
     "manual": "Manual",

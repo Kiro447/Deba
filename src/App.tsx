@@ -13,6 +13,7 @@ import AdminLogin from './pages/admin/AdminLogin'
 import AdminLayout from './pages/admin/AdminLayout'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminVehicleForm from './pages/admin/AdminVehicleForm'
+import AdminReservations from './pages/admin/AdminReservations'
 import { loadGA } from './utils/analytics'
 
 // Scroll to top on every route change
@@ -69,6 +70,7 @@ export default function App() {
             }
           >
             <Route index element={<AdminDashboard />} />
+            <Route path="reservations" element={<AdminReservations />} />
             <Route path="vehicles/new" element={<AdminVehicleForm />} />
             <Route path="vehicles/:id/edit" element={<AdminVehicleForm />} />
           </Route>

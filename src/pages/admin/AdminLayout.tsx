@@ -1,5 +1,5 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
-import { Car, LayoutDashboard, LogOut, PlusCircle } from 'lucide-react'
+import { Car, CalendarCheck, LayoutDashboard, LogOut, PlusCircle } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useTranslation } from 'react-i18next'
 
@@ -26,6 +26,7 @@ export default function AdminLayout() {
 
         <nav className="flex-1 px-3 py-4 space-y-1">
           <SideLink to="/admin" end icon={<LayoutDashboard className="w-4 h-4" />} label={t('admin.dashboard')} />
+          <SideLink to="/admin/reservations" icon={<CalendarCheck className="w-4 h-4" />} label={t('admin.reservations')} />
           <SideLink to="/admin/vehicles/new" icon={<PlusCircle className="w-4 h-4" />} label={t('admin.addVehicle')} />
         </nav>
 
