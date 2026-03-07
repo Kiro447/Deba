@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { Helmet } from 'react-helmet-async'
 import { Eye, Award, Heart } from 'lucide-react'
 
 export default function About() {
@@ -12,6 +13,10 @@ export default function About() {
 
   return (
     <main className="pt-16 min-h-screen">
+      <Helmet>
+        <title>{t('seo.aboutTitle', 'About Us – Deba Car Rental')}</title>
+        <meta name="description" content={t('seo.aboutDesc', 'Learn about Deba Car Rental – your trusted car hire partner in Skopje, North Macedonia.')} />
+      </Helmet>
       {/* Hero */}
       <section
         className="relative py-28 flex items-center justify-center bg-cover bg-center"

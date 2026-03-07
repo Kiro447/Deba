@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Upload, Loader2 } from 'lucide-react'
+import { Upload, Loader2, X, Star } from 'lucide-react'
 import { getVehicles, addVehicle, updateVehicle } from '../../utils/storage'
 import type { Car, Category, Transmission, Fuel } from '../../data/cars'
 import { useTranslation } from 'react-i18next'
@@ -22,6 +22,7 @@ function emptyForm() {
     pricePerDay: 30,
     currency: '€',
     image: '',
+    images: [] as string[],
     features: '',
     available: true,
   }
@@ -59,6 +60,7 @@ export default function AdminVehicleForm() {
           pricePerDay: existing.pricePerDay,
           currency: existing.currency,
           image: existing.image,
+          images: existing.images ?? [],
           features: existing.features.join(', '),
           available: existing.available,
         })
@@ -75,10 +77,7 @@ export default function AdminVehicleForm() {
     }))
   }
 
-  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setUploading(true)
+  async function uploadToCloudinary(file: File): Promise<string | null> {
     const fd = new FormData()
     fd.append('file', file)
     fd.append('upload_preset', import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET)
@@ -87,12 +86,51 @@ export default function AdminVehicleForm() {
       { method: 'POST', body: fd }
     )
     const data = await res.json()
-    if (data.secure_url) {
-      setForm((prev) => ({ ...prev, image: data.secure_url }))
-    } else {
+    return data.secure_url ?? null
+  }
+
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = e.target.files
+    if (!files || files.length === 0) return
+    setUploading(true)
+    setError('')
+
+    const newUrls: string[] = []
+    for (const file of Array.from(files)) {
+      const url = await uploadToCloudinary(file)
+      if (url) newUrls.push(url)
+    }
+
+    if (newUrls.length === 0) {
       setError('Image upload failed.')
+    } else {
+      setForm((prev) => {
+        const updatedImages = [...prev.images, ...newUrls]
+        return {
+          ...prev,
+          images: updatedImages,
+          image: prev.image || updatedImages[0],
+        }
+      })
     }
     setUploading(false)
+    e.target.value = ''
+  }
+
+  function removeImage(index: number) {
+    setForm((prev) => {
+      const updatedImages = prev.images.filter((_, i) => i !== index)
+      const removedUrl = prev.images[index]
+      return {
+        ...prev,
+        images: updatedImages,
+        image: prev.image === removedUrl ? (updatedImages[0] ?? '') : prev.image,
+      }
+    })
+  }
+
+  function setPrimaryImage(url: string) {
+    setForm((prev) => ({ ...prev, image: url }))
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -100,9 +138,11 @@ export default function AdminVehicleForm() {
     setError('')
 
     if (!form.name.trim()) { setError(t('admin.errorName')); return }
-    if (!form.image.trim()) { setError(t('admin.errorImage')); return }
+    if (!form.image.trim() && form.images.length === 0) { setError(t('admin.errorImage')); return }
     if (form.pricePerDay <= 0) { setError(t('admin.errorPrice')); return }
     if (form.year < 1900 || form.year > 2100) { setError(t('admin.errorYear')); return }
+
+    const primaryImage = form.image.trim() || form.images[0] || ''
 
     const car: Car = {
       id: isEdit ? id! : crypto.randomUUID(),
@@ -116,7 +156,8 @@ export default function AdminVehicleForm() {
       hp: Number(form.hp),
       pricePerDay: Number(form.pricePerDay),
       currency: form.currency.trim() || '€',
-      image: form.image.trim(),
+      image: primaryImage,
+      images: form.images,
       features: form.features.split(',').map((f) => f.trim()).filter(Boolean),
       available: form.available,
     }
@@ -194,18 +235,64 @@ export default function AdminVehicleForm() {
           </Field>
         </div>
 
-        {/* Image URL + upload button + preview */}
-        <Field label={t('admin.imageUrl')}>
+        {/* Images */}
+        <Field label={t('admin.images', 'Vehicle Images')}>
           <div className="flex gap-2">
-            <input name="image" value={form.image} onChange={handleChange} className={input} placeholder="https://..." />
+            <input
+              name="image"
+              value={form.image}
+              onChange={handleChange}
+              className={input}
+              placeholder="https://... (primary image URL)"
+            />
             <label className={`shrink-0 cursor-pointer inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors ${uploading ? 'opacity-50 pointer-events-none' : ''}`}>
               {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-              {uploading ? t('admin.uploading') : t('admin.uploadImage')}
-              <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+              {uploading ? t('admin.uploading') : t('admin.uploadImages', 'Upload')}
+              <input type="file" accept="image/*" multiple className="hidden" onChange={handleImageUpload} />
             </label>
           </div>
         </Field>
-        {form.image && (
+
+        {/* Image gallery preview */}
+        {form.images.length > 0 && (
+          <div className="grid grid-cols-3 gap-3">
+            {form.images.map((url, i) => (
+              <div key={i} className="relative group">
+                <img
+                  src={url}
+                  alt={`Image ${i + 1}`}
+                  className={`w-full h-28 object-cover rounded-lg bg-gray-100 ${url === form.image ? 'ring-2 ring-brand-500' : ''}`}
+                />
+                <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    type="button"
+                    onClick={() => setPrimaryImage(url)}
+                    className={`p-1 rounded-full shadow-sm transition-colors ${url === form.image ? 'bg-brand-500 text-white' : 'bg-white text-gray-600 hover:bg-brand-50'}`}
+                    title={t('admin.setPrimary', 'Set as primary')}
+                  >
+                    <Star className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => removeImage(i)}
+                    className="p-1 bg-white text-red-500 rounded-full shadow-sm hover:bg-red-50 transition-colors"
+                    title={t('admin.removeImage', 'Remove')}
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                {url === form.image && (
+                  <span className="absolute bottom-1 left-1 bg-brand-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
+                    {t('admin.primary', 'PRIMARY')}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Single image preview fallback */}
+        {form.image && form.images.length === 0 && (
           <img src={form.image} alt="preview" className="w-full h-40 object-cover rounded-lg bg-gray-100" />
         )}
 

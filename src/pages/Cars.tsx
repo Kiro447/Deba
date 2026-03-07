@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { Helmet } from 'react-helmet-async'
 import { parse, isValid } from 'date-fns'
 import { getVehicles } from '../utils/storage'
 import type { Car, Category } from '../data/cars'
@@ -52,6 +53,10 @@ export default function Cars() {
 
   return (
     <main className="pt-24 pb-20 min-h-screen bg-gray-50">
+      <Helmet>
+        <title>{t('seo.carsTitle', 'Our Fleet – Deba Car Rental')}</title>
+        <meta name="description" content={t('seo.carsDesc', 'Browse our fleet of rental cars in Skopje. Economy, compact, SUV, luxury and van options available.')} />
+      </Helmet>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Page header */}
         <div className="text-center mb-10">

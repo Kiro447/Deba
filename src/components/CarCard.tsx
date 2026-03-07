@@ -1,5 +1,6 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Users, DoorOpen, Zap, Calendar, Fuel, Settings } from 'lucide-react'
+import { Users, DoorOpen, Zap, Calendar, Fuel, Settings, ChevronLeft, ChevronRight } from 'lucide-react'
 import type { Car } from '../data/cars'
 
 interface CarCardProps {
@@ -11,25 +12,65 @@ interface CarCardProps {
 
 export default function CarCard({ car, onReserve, pickupDate, returnDate }: CarCardProps) {
   const { t } = useTranslation()
+  const [imgIndex, setImgIndex] = useState(0)
+
+  const allImages = car.images && car.images.length > 0 ? car.images : [car.image]
+  const hasMultiple = allImages.length > 1
 
   const days =
     pickupDate && returnDate
       ? Math.max(1, Math.ceil((returnDate.getTime() - pickupDate.getTime()) / (1000 * 60 * 60 * 24)))
       : null
 
+  function prev(e: React.MouseEvent) {
+    e.stopPropagation()
+    setImgIndex((i) => (i === 0 ? allImages.length - 1 : i - 1))
+  }
+
+  function next(e: React.MouseEvent) {
+    e.stopPropagation()
+    setImgIndex((i) => (i === allImages.length - 1 ? 0 : i + 1))
+  }
+
   return (
     <div className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden flex flex-col">
-      {/* Image */}
-      <div className="relative h-48 overflow-hidden bg-gray-100">
+      {/* Image carousel */}
+      <div className="relative h-48 overflow-hidden bg-gray-100 group">
         <img
-          src={car.image}
+          src={allImages[imgIndex]}
           alt={car.name}
-          className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+          className="w-full h-full object-cover transition-all duration-500 hover:scale-105"
           loading="lazy"
         />
         <span className="absolute top-3 left-3 bg-brand-600 text-white text-xs font-semibold px-2.5 py-1 rounded-full">
           {car.category}
         </span>
+
+        {hasMultiple && (
+          <>
+            <button
+              onClick={prev}
+              className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-700 rounded-full p-1 shadow opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button
+              onClick={next}
+              className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-700 rounded-full p-1 shadow opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+              {allImages.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={(e) => { e.stopPropagation(); setImgIndex(i) }}
+                  className={`w-1.5 h-1.5 rounded-full transition-colors ${i === imgIndex ? 'bg-white' : 'bg-white/50'}`}
+                />
+              ))}
+            </div>
+          </>
+        )}
       </div>
 
       {/* Content */}

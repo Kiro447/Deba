@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { Helmet } from 'react-helmet-async'
 import { Phone, Mail, MapPin, Clock, MessageCircle } from 'lucide-react'
 import { BUSINESS } from '../data/config'
 
@@ -40,6 +41,10 @@ export default function Contact() {
 
   return (
     <main className="pt-24 pb-20 min-h-screen bg-gray-50">
+      <Helmet>
+        <title>{t('seo.contactTitle', 'Contact Us – Deba Car Rental')}</title>
+        <meta name="description" content={t('seo.contactDesc', 'Contact Deba Car Rental in Skopje. Call, WhatsApp, or email us for car rental bookings.')} />
+      </Helmet>
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-12">

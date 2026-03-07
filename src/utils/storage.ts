@@ -15,6 +15,7 @@ function rowToCar(row: Record<string, unknown>): Car {
     pricePerDay: row.price_per_day as number,
     currency: row.currency as string,
     image: row.image as string,
+    images: (row.images as string[]) ?? [],
     features: row.features as string[],
     available: row.available as boolean,
   }
@@ -34,6 +35,7 @@ function carToRow(car: Car) {
     price_per_day: car.pricePerDay,
     currency: car.currency,
     image: car.image,
+    images: car.images,
     features: car.features,
     available: car.available,
   }

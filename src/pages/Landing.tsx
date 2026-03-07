@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { Helmet } from 'react-helmet-async'
 import DatePicker from 'react-datepicker'
 import 'react-datepicker/dist/react-datepicker.css'
 import { format } from 'date-fns'
@@ -41,6 +42,10 @@ export default function Landing() {
 
   return (
     <>
+      <Helmet>
+        <title>{t('seo.homeTitle', 'Deba Car Rental – Rent a Car in Skopje')}</title>
+        <meta name="description" content={t('seo.homeDesc', 'Affordable car hire in Skopje, North Macedonia. Wide selection of economy, SUV, luxury and van vehicles.')} />
+      </Helmet>
       {/* ── Hero ────────────────────────────────────────────────────────────── */}
       <section
         className="relative min-h-screen flex items-center justify-center bg-cover bg-center"

@@ -153,6 +153,11 @@
     "errorLogin": "Invalid username or password.",
     "uploading": "Uploading...",
     "uploadImage": "Upload image",
+    "uploadImages": "Upload",
+    "images": "Vehicle Images",
+    "setPrimary": "Set as primary",
+    "removeImage": "Remove",
+    "primary": "PRIMARY",
     "or": "or",
     "reservations": "Reservations",
     "noReservations": "No reservations yet.",
@@ -170,6 +175,16 @@
     "reopen": "Reopen",
     "filterAll": "All",
     "statusUpdated": "Status updated."
+  },
+  "seo": {
+    "homeTitle": "Deba Car Rental – Rent a Car in Skopje",
+    "homeDesc": "Affordable car hire in Skopje, North Macedonia. Wide selection of economy, SUV, luxury and van vehicles.",
+    "carsTitle": "Our Fleet – Deba Car Rental",
+    "carsDesc": "Browse our fleet of rental cars in Skopje. Economy, compact, SUV, luxury and van options available.",
+    "aboutTitle": "About Us – Deba Car Rental",
+    "aboutDesc": "Learn about Deba Car Rental – your trusted car hire partner in Skopje, North Macedonia.",
+    "contactTitle": "Contact Us – Deba Car Rental",
+    "contactDesc": "Contact Deba Car Rental in Skopje. Call, WhatsApp, or email us for car rental bookings."
   },
   "common": {
     "manual": "Manual",
