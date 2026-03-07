@@ -6,7 +6,6 @@ import { format } from 'date-fns'
 import { X, AlertCircle, CheckCircle2 } from 'lucide-react'
 import type { Car } from '../data/cars'
 import { createReservation } from '../utils/storage'
-import { sendReservationEmail } from '../utils/email'
 
 interface Props {
   car: Car
@@ -88,15 +87,6 @@ export default function ReservationModal({ car, initialPickup, initialReturn, on
         lastName: form.lastName,
         email: form.email,
         phone: form.phone,
-        pickupDate: pickupStr,
-        returnDate: returnStr,
-        notes: form.notes,
-      })
-      sendReservationEmail({
-        customerName: `${form.firstName} ${form.lastName}`,
-        customerEmail: form.email,
-        phone: form.phone,
-        carName: car.name,
         pickupDate: pickupStr,
         returnDate: returnStr,
         notes: form.notes,

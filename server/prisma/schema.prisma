@@ -1,0 +1,49 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Vehicle {
+  id           String   @id @default(uuid())
+  name         String
+  category     String
+  year         Int
+  doors        Int
+  seats        Int
+  transmission String
+  fuel         String
+  hp           Int
+  pricePerDay  Float    @map("price_per_day")
+  currency     String   @default("€")
+  image        String
+  images       String[] @default([])
+  features     String[] @default([])
+  available    Boolean  @default(true)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  reservations Reservation[]
+
+  @@map("vehicles")
+}
+
+model Reservation {
+  id         String   @id @default(uuid())
+  vehicleId  String   @map("vehicle_id")
+  firstName  String   @map("first_name")
+  lastName   String   @map("last_name")
+  email      String
+  phone      String
+  pickupDate String   @map("pickup_date")
+  returnDate String   @map("return_date")
+  notes      String?
+  status     String   @default("new")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id])
+
+  @@map("reservations")
+}
