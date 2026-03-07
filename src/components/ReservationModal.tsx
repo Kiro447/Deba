@@ -6,6 +6,9 @@ import { format } from 'date-fns'
 import { X, AlertCircle, CheckCircle2 } from 'lucide-react'
 import type { Car } from '../data/cars'
 import { createReservation } from '../utils/storage'
+import { sendReservationEmail } from '../utils/email'
+
+const USE_BACKEND = !!import.meta.env.VITE_API_URL
 
 interface Props {
   car: Car
@@ -91,6 +94,17 @@ export default function ReservationModal({ car, initialPickup, initialReturn, on
         returnDate: returnStr,
         notes: form.notes,
       })
+      if (!USE_BACKEND) {
+        sendReservationEmail({
+          customerName: `${form.firstName} ${form.lastName}`,
+          customerEmail: form.email,
+          phone: form.phone,
+          carName: car.name,
+          pickupDate: pickupStr,
+          returnDate: returnStr,
+          notes: form.notes,
+        })
+      }
       setSuccess(true)
     } catch {
       setError(t('reservation.errorGeneric'))

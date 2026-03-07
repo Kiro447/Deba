@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { getReservations, updateReservationStatus } from '../../utils/storage'
 import type { Reservation } from '../../utils/storage'
+import { sendStatusUpdateEmail } from '../../utils/email'
+
+const USE_BACKEND = !!import.meta.env.VITE_API_URL
 
 type Filter = 'all' | 'new' | 'confirmed' | 'cancelled'
 
@@ -23,6 +26,23 @@ export default function AdminReservations() {
 
   async function changeStatus(id: string, status: Reservation['status']) {
     await updateReservationStatus(id, status)
+    if (!USE_BACKEND) {
+      const reservation = reservations.find((r) => r.id === id)
+      if (reservation) {
+        const statusLabel =
+          status === 'confirmed' ? t('admin.statusConfirmed')
+            : status === 'cancelled' ? t('admin.statusCancelled')
+              : t('admin.statusNew')
+        sendStatusUpdateEmail({
+          customerName: `${reservation.firstName} ${reservation.lastName}`,
+          customerEmail: reservation.email,
+          carName: reservation.vehicleName ?? '',
+          pickupDate: reservation.pickupDate,
+          returnDate: reservation.returnDate,
+          newStatus: statusLabel,
+        })
+      }
+    }
     const updated = await getReservations()
     setReservations(updated)
     setSuccessMsg(t('admin.statusUpdated'))
